@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const categories = ["All", "Bags", "Belts", "Accessories", "Custom Orders"];
 
@@ -15,6 +16,10 @@ const Shop = () => {
   const [active, setActive] = useState(initialCat);
   const [products, setProducts] = useState<any[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [orderName, setOrderName] = useState("");
+  const [orderEmail, setOrderEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -33,7 +38,11 @@ const Shop = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedProduct(null);
+      if (e.key === "Escape") {
+        setSelectedProduct(null);
+        setOrderName("");
+        setOrderEmail("");
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -107,7 +116,11 @@ const Shop = () => {
         {selectedProduct && (
           <div
             className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300"
-            onClick={() => setSelectedProduct(null)}
+            onClick={() => {
+              setSelectedProduct(null);
+              setOrderName("");
+              setOrderEmail("");
+            }}
           >
             <div
               className="bg-background border shadow-2xl max-w-4xl w-full flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh]"
@@ -125,7 +138,11 @@ const Shop = () => {
               {/* Content Section */}
               <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col overflow-y-auto relative">
                 <button
-                  onClick={() => setSelectedProduct(null)}
+                  onClick={() => {
+                    setSelectedProduct(null);
+                    setOrderName("");
+                    setOrderEmail("");
+                  }}
                   className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -141,33 +158,68 @@ const Shop = () => {
                   }).format(selectedProduct.price || 0)}
                 </p>
 
-                <div className="prose prose-sm text-muted-foreground mb-8 flex-1">
+                <div className="prose prose-sm text-muted-foreground mb-6 flex-1">
                   <p>A beautifully handcrafted piece featuring intricate details and premium materials. Keep as a statement piece or gift to someone special.</p>
                 </div>
 
-                <div className="mt-auto pt-6 border-t">
-                  <button
-                    onClick={async () => {
-                      const { error } = await supabase.from("orders").insert([
-                        {
-                          product: selectedProduct.name,
-                          name: "Guest Checkout",
-                          email: "guest@example.com",
-                        },
-                      ]);
+                <div className="mt-auto space-y-4">
+                  <div>
+                    <label htmlFor="name" className="block text-xs font-heading font-medium tracking-wide uppercase text-muted-foreground mb-1">Full Name</label>
+                    <input
+                      id="name"
+                      type="text"
+                      value={orderName}
+                      onChange={(e) => setOrderName(e.target.value)}
+                      placeholder="Jane Doe"
+                      className="w-full border-b border-muted-foreground/30 bg-transparent py-2 text-sm focus:border-foreground focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-xs font-heading font-medium tracking-wide uppercase text-muted-foreground mb-1">Email Address</label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={orderEmail}
+                      onChange={(e) => setOrderEmail(e.target.value)}
+                      placeholder="jane@example.com"
+                      className="w-full border-b border-muted-foreground/30 bg-transparent py-2 text-sm focus:border-foreground focus:outline-none transition-colors"
+                    />
+                  </div>
 
-                      if (error) {
-                        console.error(error);
-                        alert("Error placing order");
-                      } else {
-                        alert("Order placed successfully!");
-                        setSelectedProduct(null);
-                      }
-                    }}
-                    className="w-full bg-foreground text-background font-body uppercase tracking-[0.2em] text-xs py-4 hover:bg-foreground/90 transition-colors active:scale-[0.98]"
-                  >
-                    Place Pre-Order
-                  </button>
+                  <div className="pt-4">
+                    <button
+                      disabled={isSubmitting || !orderName.trim() || !orderEmail.trim()}
+                      onClick={async () => {
+                        if (!orderName.trim() || !orderEmail.trim()) {
+                          toast.error("Please fill out all fields.");
+                          return;
+                        }
+                        
+                        setIsSubmitting(true);
+                        const { error } = await supabase.from("orders").insert([
+                          {
+                            product: selectedProduct.name,
+                            name: orderName.trim(),
+                            email: orderEmail.trim(),
+                          },
+                        ]);
+                        setIsSubmitting(false);
+
+                        if (error) {
+                          console.error(error);
+                          toast.error("Failed to place order. Please try again.");
+                        } else {
+                          toast.success("Order placed successfully! We'll be in touch.");
+                          setSelectedProduct(null);
+                          setOrderName("");
+                          setOrderEmail("");
+                        }
+                      }}
+                      className="w-full bg-foreground text-background font-body uppercase tracking-[0.2em] text-xs py-4 hover:bg-foreground/90 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      {isSubmitting ? "Processing..." : "Place Pre-Order"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
