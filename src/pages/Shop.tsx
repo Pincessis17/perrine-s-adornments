@@ -15,47 +15,21 @@ const Shop = () => {
   const [active, setActive] = useState(initialCat);
   const [products, setProducts] = useState<any[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
-    useEffect(() => {
-  const test = async () => {
-    try {
-      const res = await fetch(
-        "https://tvbccszndxozqijluhfo.supabase.co/rest/v1/products",
-        {
-          headers: {
-            apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2YmNjc3puZHhvenFqamx1aGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMzU5MzksImV4cCI6MjA4OTcxMTkzOX0.4NZAvMH3STnYo5QrsweQa9qGF6FyMfrjiCdYPUN2mDo",
-            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2YmNjc3puZHhvenFqamx1aGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMzU5MzksImV4cCI6MjA4OTcxMTkzOX0.4NZAvMH3STnYo5QrsweQa9qGF6FyMfrjiCdYPUN2mDo",
-          },
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase.from("products").select("*");
+        if (error) throw error;
+        if (data) {
+          setProducts(data);
         }
-      );
+      } catch (err) {
+        console.error("FETCH ERROR:", err);
+      }
+    };
 
-      const data = await res.json();
-      console.log("FETCH TEST:", data);
-    } catch (err) {
-      console.error("FETCH ERROR:", err);
-    }
-  };
-
-  test(); // ✅ IMPORTANT — you forgot this
-}, []);
-  // ✅ Fetch products from Supabase
-  //useEffect(() => {
-  //const test = async () => {
-    //try {
-      //const res = await fetch("https://tvbccszndxozqijluhfo.supabase.co/rest/v1/products", {
-       // headers: {
-          //apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2YmNjc3puZHhvenFqamx1aGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMzU5MzksImV4cCI6MjA4OTcxMTkzOX0.4NZAvMH3STnYo5QrsweQa9qGF6FyMfrjiCdYPUN2mDo",
-      //  },
-      //});
-
-    //  const data = await res.json();
-    //  console.log("FETCH TEST:", data);
-   // } catch (err) {
-  //    console.error("FETCH ERROR:", err);
-   // }
- // };
-
- // test();
-//}, []);
+    fetchProducts();
+  }, []);
 
   const filtered =
     active === "All"
@@ -79,11 +53,10 @@ const Shop = () => {
             <button
               key={cat}
               onClick={() => setActive(cat)}
-              className={`font-body text-xs tracking-[0.2em] uppercase px-6 py-2.5 border transition-all duration-300 ${
-                active === cat
+              className={`font-body text-xs tracking-[0.2em] uppercase px-6 py-2.5 border transition-all duration-300 ${active === cat
                   ? "bg-accent text-accent-foreground border-accent"
                   : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-              }`}
+                }`}
             >
               {cat}
             </button>
@@ -100,7 +73,7 @@ const Shop = () => {
             >
               <div className="aspect-[3/4] overflow-hidden mb-4">
                 <img
-                  src={product.image}
+                  src={`${product.image}?v=${Date.now()}`}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
