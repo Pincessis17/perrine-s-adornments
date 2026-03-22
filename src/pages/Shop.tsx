@@ -15,16 +15,18 @@ const Shop = () => {
   const [active, setActive] = useState(initialCat);
   const [products, setProducts] = useState<any[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
-
-  // ✅ Fetch products from Supabase
-  useEffect(() => {
+    useEffect(() => {
   const test = async () => {
     try {
-      const res = await fetch("https://tvbccszndxozqijluhfo.supabase.co/rest/v1/products", {
-        headers: {
-          apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2YmNjc3puZHhvenFqamx1aGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMzU5MzksImV4cCI6MjA4OTcxMTkzOX0.4NZAvMH3STnYo5QrsweQa9qGF6FyMfrjiCdYPUN2mDoY",
-        },
-      });
+      const res = await fetch(
+        "https://tvbccszndxozqijluhfo.supabase.co/rest/v1/products",
+        {
+          headers: {
+            apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2YmNjc3puZHhvenFqamx1aGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMzU5MzksImV4cCI6MjA4OTcxMTkzOX0.4NZAvMH3STnYo5QrsweQa9qGF6FyMfrjiCdYPUN2mDo",
+            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2YmNjc3puZHhvenFqamx1aGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMzU5MzksImV4cCI6MjA4OTcxMTkzOX0.4NZAvMH3STnYo5QrsweQa9qGF6FyMfrjiCdYPUN2mDo",
+          },
+        }
+      );
 
       const data = await res.json();
       console.log("FETCH TEST:", data);
@@ -33,8 +35,27 @@ const Shop = () => {
     }
   };
 
-  test();
+  test(); // ✅ IMPORTANT — you forgot this
 }, []);
+  // ✅ Fetch products from Supabase
+  //useEffect(() => {
+  //const test = async () => {
+    //try {
+      //const res = await fetch("https://tvbccszndxozqijluhfo.supabase.co/rest/v1/products", {
+       // headers: {
+          //apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2YmNjc3puZHhvenFqamx1aGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMzU5MzksImV4cCI6MjA4OTcxMTkzOX0.4NZAvMH3STnYo5QrsweQa9qGF6FyMfrjiCdYPUN2mDo",
+      //  },
+      //});
+
+    //  const data = await res.json();
+    //  console.log("FETCH TEST:", data);
+   // } catch (err) {
+  //    console.error("FETCH ERROR:", err);
+   // }
+ // };
+
+ // test();
+//}, []);
 
   const filtered =
     active === "All"
