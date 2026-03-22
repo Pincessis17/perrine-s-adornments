@@ -64,28 +64,33 @@ const Shop = () => {
         </div>
 
         {/* Products */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
           {filtered.map((product, i) => (
             <div
               key={product.id}
-              className="group cursor-pointer"
+              className="group cursor-pointer flex flex-col active:scale-[0.98] transition-all duration-200"
               onClick={() => setSelectedProduct(product)}
             >
-              <div className="aspect-[3/4] overflow-hidden mb-4">
+              <div className="bg-secondary/20 aspect-[4/5] overflow-hidden mb-5 rounded-sm">
                 <img
                   src={`${product.image}?v=${Date.now()}`}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                 />
               </div>
 
-              <h3 className="font-heading text-xl mb-1">
-                {product.name}
-              </h3>
+              <div className="flex flex-col space-y-1 px-1">
+                <h3 className="font-heading text-lg font-medium tracking-wide text-foreground">
+                  {product.name}
+                </h3>
 
-              <p className="font-body text-sm text-muted-foreground">
-                ${product.price}
-              </p>
+                <p className="font-body text-sm text-muted-foreground">
+                  {new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  }).format(product.price || 0)}
+                </p>
+              </div>
             </div>
           ))}
         </div>
