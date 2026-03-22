@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import emailjs from "@emailjs/browser";
 
 const categories = ["All", "Bags", "Belts", "Accessories", "Custom Orders"];
 
@@ -18,6 +19,8 @@ const Shop = () => {
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [orderName, setOrderName] = useState("");
   const [orderEmail, setOrderEmail] = useState("");
+  const [orderWhatsapp, setOrderWhatsapp] = useState("");
+  const [orderQuantity, setOrderQuantity] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -42,6 +45,8 @@ const Shop = () => {
         setSelectedProduct(null);
         setOrderName("");
         setOrderEmail("");
+        setOrderWhatsapp("");
+        setOrderQuantity(1);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -120,6 +125,8 @@ const Shop = () => {
               setSelectedProduct(null);
               setOrderName("");
               setOrderEmail("");
+              setOrderWhatsapp("");
+              setOrderQuantity(1);
             }}
           >
             <div
@@ -142,6 +149,8 @@ const Shop = () => {
                     setSelectedProduct(null);
                     setOrderName("");
                     setOrderEmail("");
+                    setOrderWhatsapp("");
+                    setOrderQuantity(1);
                   }}
                   className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground transition-colors"
                 >
@@ -185,34 +194,80 @@ const Shop = () => {
                       className="w-full border-b border-muted-foreground/30 bg-transparent py-2 text-sm focus:border-foreground focus:outline-none transition-colors"
                     />
                   </div>
+                  <div>
+                    <label htmlFor="whatsapp" className="block text-xs font-heading font-medium tracking-wide uppercase text-muted-foreground mb-1">WhatsApp Number</label>
+                    <input
+                      id="whatsapp"
+                      type="tel"
+                      value={orderWhatsapp}
+                      onChange={(e) => setOrderWhatsapp(e.target.value)}
+                      placeholder="+1 (555) 000-0000"
+                      className="w-full border-b border-muted-foreground/30 bg-transparent py-2 text-sm focus:border-foreground focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="quantity" className="block text-xs font-heading font-medium tracking-wide uppercase text-muted-foreground mb-1">Quantity</label>
+                    <input
+                      id="quantity"
+                      type="number"
+                      min="1"
+                      value={orderQuantity}
+                      onChange={(e) => setOrderQuantity(parseInt(e.target.value) || 1)}
+                      className="w-full border-b border-muted-foreground/30 bg-transparent py-2 text-sm focus:border-foreground focus:outline-none transition-colors"
+                    />
+                  </div>
 
                   <div className="pt-4">
                     <button
-                      disabled={isSubmitting || !orderName.trim() || !orderEmail.trim()}
+                      disabled={isSubmitting || !orderName.trim() || !orderEmail.trim() || !orderWhatsapp.trim() || orderQuantity < 1}
                       onClick={async () => {
-                        if (!orderName.trim() || !orderEmail.trim()) {
+                        if (!orderName.trim() || !orderEmail.trim() || !orderWhatsapp.trim() || orderQuantity < 1) {
                           toast.error("Please fill out all fields.");
                           return;
                         }
                         
                         setIsSubmitting(true);
-                        const { error } = await supabase.from("orders").insert([
-                          {
-                            product: selectedProduct.name,
-                            name: orderName.trim(),
-                            email: orderEmail.trim(),
-                          },
-                        ]);
-                        setIsSubmitting(false);
 
-                        if (error) {
-                          console.error(error);
-                          toast.error("Failed to place order. Please try again.");
-                        } else {
-                          toast.success("Order placed successfully! We'll be in touch.");
+                        try {
+                          // 1. Send via EmailJS
+                          await emailjs.send(
+                            "service_9g8407b",
+                            "template_lopxlll",
+                            {
+                              product: selectedProduct.name,
+                              name: orderName.trim(),
+                              email: orderEmail.trim(),
+                              whatsapp: orderWhatsapp.trim(),
+                              quantity: orderQuantity,
+                            },
+                            { publicKey: "rJYnPqY3rDltbYvrX" }
+                          );
+
+                          // 2. Save directly to Supabase as backup/record
+                          const { error } = await supabase.from("orders").insert([
+                            {
+                              product: selectedProduct.name,
+                              name: orderName.trim(),
+                              email: orderEmail.trim(),
+                              whatsapp: orderWhatsapp.trim(),
+                              quantity: orderQuantity,
+                            },
+                          ]);
+
+                          if (error) throw error;
+
+                          // 3. Success Feedback
+                          toast.success("Order sent successfully! Check your email.");
                           setSelectedProduct(null);
                           setOrderName("");
                           setOrderEmail("");
+                          setOrderWhatsapp("");
+                          setOrderQuantity(1);
+                        } catch (error) {
+                          console.error(error);
+                          toast.error("Failed to place order. Please try again later.");
+                        } finally {
+                          setIsSubmitting(false);
                         }
                       }}
                       className="w-full bg-foreground text-background font-body uppercase tracking-[0.2em] text-xs py-4 hover:bg-foreground/90 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
