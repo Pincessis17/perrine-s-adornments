@@ -31,6 +31,14 @@ const Shop = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedProduct(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const filtered =
     active === "All"
       ? products
@@ -98,51 +106,70 @@ const Shop = () => {
         {/* Modal */}
         {selectedProduct && (
           <div
-            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300"
             onClick={() => setSelectedProduct(null)}
           >
             <div
-              className="bg-white max-w-2xl w-full p-6"
+              className="bg-background border shadow-2xl max-w-4xl w-full flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh]"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
-                src={selectedProduct.image}
-                alt={selectedProduct.name}
-                className="w-full mb-4"
-              />
+              {/* Image Section */}
+              <div className="w-full md:w-1/2 bg-secondary/20 relative aspect-square md:aspect-auto overflow-hidden shrink-0">
+                <img
+                  src={`${selectedProduct.image}?v=${Date.now()}`}
+                  alt={selectedProduct.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
-              <h2 className="text-2xl mb-2">{selectedProduct.name}</h2>
-              <p className="mb-4">${selectedProduct.price}</p>
+              {/* Content Section */}
+              <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col overflow-y-auto relative">
+                <button
+                  onClick={() => setSelectedProduct(null)}
+                  className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
 
-              {/* ✅ Place Order */}
-              <button
-                onClick={async () => {
-                  const { error } = await supabase.from("orders").insert([
-                    {
-                      product: selectedProduct.name,
-                      name: "Test User",
-                      email: "test@email.com",
-                    },
-                  ]);
+                <h2 className="font-heading text-3xl font-medium tracking-wide mb-2 mt-4 text-foreground">
+                  {selectedProduct.name}
+                </h2>
+                <p className="font-body text-xl text-muted-foreground mb-8">
+                  {new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  }).format(selectedProduct.price || 0)}
+                </p>
 
-                  if (error) {
-                    console.error(error);
-                    alert("Error placing order");
-                  } else {
-                    alert("Order placed!");
-                  }
-                }}
-                className="w-full bg-black text-white py-3 mb-2"
-              >
-                Place Order
-              </button>
+                <div className="prose prose-sm text-muted-foreground mb-8 flex-1">
+                  <p>A beautifully handcrafted piece featuring intricate details and premium materials. Keep as a statement piece or gift to someone special.</p>
+                </div>
 
-              <button
-                onClick={() => setSelectedProduct(null)}
-                className="w-full text-gray-500"
-              >
-                Close
-              </button>
+                <div className="mt-auto pt-6 border-t">
+                  <button
+                    onClick={async () => {
+                      const { error } = await supabase.from("orders").insert([
+                        {
+                          product: selectedProduct.name,
+                          name: "Guest Checkout",
+                          email: "guest@example.com",
+                        },
+                      ]);
+
+                      if (error) {
+                        console.error(error);
+                        alert("Error placing order");
+                      } else {
+                        alert("Order placed successfully!");
+                        setSelectedProduct(null);
+                      }
+                    }}
+                    className="w-full bg-foreground text-background font-body uppercase tracking-[0.2em] text-xs py-4 hover:bg-foreground/90 transition-colors active:scale-[0.98]"
+                  >
+                    Place Pre-Order
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
